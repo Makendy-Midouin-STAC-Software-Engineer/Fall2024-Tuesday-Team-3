@@ -3,14 +3,14 @@
 #include <iostream>  // For debugging output
 
 int main() {
-    sf::RenderWindow window(sf::VideoMode(400, 400), "Maze Game Demo");
+    sf::RenderWindow window(sf::VideoMode(400, 400), "Maze Game with Checkpoints");
 
-    // Create walls using vector
+    // Create walls using a vector
     std::vector<sf::RectangleShape> walls;
     sf::RectangleShape wall(sf::Vector2f(40, 40));
     wall.setFillColor(sf::Color::Blue);
 
-    // Define a few walls to form a simple maze
+    // Define the walls for the maze
     for (int i = 0; i < 10; ++i) {
         wall.setPosition(i * 40, 0);       // Top wall
         walls.push_back(wall);
@@ -35,6 +35,17 @@ int main() {
         wall.setPosition(i * 40, 200);     // Another inner wall
         walls.push_back(wall);
     }
+
+    // Checkpoint setup
+    std::vector<sf::CircleShape> checkpoints;
+    sf::CircleShape checkpoint(10);  // Radius of 10 pixels
+    checkpoint.setFillColor(sf::Color::Yellow);
+
+    // Place checkpoints in the maze
+    checkpoint.setPosition(160, 160);  // Example checkpoint position
+    checkpoints.push_back(checkpoint);
+    checkpoint.setPosition(280, 280);
+    checkpoints.push_back(checkpoint);
 
     // Player setup
     sf::RectangleShape player(sf::Vector2f(30, 30));
@@ -70,17 +81,6 @@ int main() {
         nextPos.left += movement.x;
         nextPos.top += movement.y;
 
-        // Debug: Print player position and movement
-        std::cout << "Player Pos: (" << player.getPosition().x << ", " 
-                  << player.getPosition().y << "), Movement: (" 
-                  << movement.x << ", " << movement.y << ")" << std::endl;
-
-        // Prevent player from moving outside the window
-        if (nextPos.left < 0) movement.x = 0;
-        if (nextPos.top < 0) movement.y = 0;
-        if (nextPos.left + nextPos.width > window.getSize().x) movement.x = 0;
-        if (nextPos.top + nextPos.height > window.getSize().y) movement.y = 0;
-
         // Check collisions with walls
         bool canMoveX = true, canMoveY = true;
         for (const auto& w : walls) {
@@ -96,9 +96,18 @@ int main() {
         if (canMoveX) player.move(movement.x, 0);
         if (canMoveY) player.move(0, movement.y);
 
+        // Check if the player reached a checkpoint
+        for (auto& cp : checkpoints) {
+            if (player.getGlobalBounds().intersects(cp.getGlobalBounds())) {
+                cp.setFillColor(sf::Color::Red);  // Change color to indicate it's reached
+                std::cout << "Checkpoint reached at: (" << cp.getPosition().x << ", " << cp.getPosition().y << ")" << std::endl;
+            }
+        }
+
         // Render everything
         window.clear();
         for (const auto& w : walls) window.draw(w);
+        for (const auto& cp : checkpoints) window.draw(cp);
         window.draw(player);
         window.display();
     }
