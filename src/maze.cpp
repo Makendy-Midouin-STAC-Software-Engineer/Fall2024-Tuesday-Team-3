@@ -11,16 +11,16 @@ int main() {
 
     sf::RenderWindow window(sf::VideoMode(COLS * CELL_SIZE, ROWS * CELL_SIZE), "Maze Game with Checkpoints");
 
-    // Maze layout (1 = wall, 0 = path)
+    // Maze layout (1 = wall, 0 = path, 3 = endpoint)
     int maze[ROWS][COLS] = {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-        {1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1},
+        {1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1}, // Added endpoint represented by 3
         {1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1},
         {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1},
         {1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1},
         {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},
         {1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1},
-        {1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1},
+        {1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1, 0, 1, 1},
         {1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1},
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     };
@@ -30,17 +30,25 @@ int main() {
     sf::RectangleShape wall(sf::Vector2f(CELL_SIZE - 2, CELL_SIZE - 2));  // Reduced size for thinner appearance
     wall.setFillColor(sf::Color::Blue);
 
+    sf::RectangleShape endpoint(sf::Vector2f(CELL_SIZE - 4, CELL_SIZE - 4));  // Smaller size for endpoint
+    endpoint.setFillColor(sf::Color::Red);
+
+    bool endpointExists = false;
+
     for (int row = 0; row < ROWS; ++row) {
         for (int col = 0; col < COLS; ++col) {
             if (maze[row][col] == 1) {
                 wall.setPosition(col * CELL_SIZE, row * CELL_SIZE);
                 walls.push_back(wall);
+            } else if (maze[row][col] == 3) {
+                endpoint.setPosition(col * CELL_SIZE + 2, row * CELL_SIZE + 2);  // Position endpoint
+                endpointExists = true;
             }
         }
     }
 
     // Define checkpoint
-    sf::CircleShape checkpoint(10);  // Radius of 10 pixels
+    sf::CircleShape checkpoint(8);  // Reduced radius to fit smaller cells
     checkpoint.setFillColor(sf::Color::Yellow);
     checkpoint.setPosition(
         6 * CELL_SIZE + (CELL_SIZE / 2 - checkpoint.getRadius()),
@@ -50,7 +58,7 @@ int main() {
     // Player setup
     sf::RectangleShape player(sf::Vector2f(15, 15));  // Reduced size to fit smaller cells
     player.setFillColor(sf::Color::Green);
-    player.setPosition(CELL_SIZE + 7.5f, CELL_SIZE + 7.5f);  // Updated starting position for centering player within the cell
+    player.setPosition(CELL_SIZE + 7.5f, CELL_SIZE + 7.5f);  // Starting position at an open path
 
     // Movement speed
     float speed = 100.0f;  // Pixels per second
@@ -114,14 +122,22 @@ int main() {
 
         // Check if the player reached the checkpoint
         if (player.getGlobalBounds().intersects(checkpoint.getGlobalBounds())) {
-            checkpoint.setFillColor(sf::Color::Red);  // Change color to indicate it's reached
+            checkpoint.setFillColor(sf::Color::Magenta);  // Change color to indicate it's reached
             std::cout << "Checkpoint reached at: (" << checkpoint.getPosition().x << ", " << checkpoint.getPosition().y << ")" << std::endl;
+        }
+
+        // Check if the player reached the endpoint
+        if (endpointExists && player.getGlobalBounds().intersects(endpoint.getGlobalBounds())) {
+            endpoint.setFillColor(sf::Color::Green);  // Change color to indicate the endpoint is reached
+            std::cout << "Endpoint reached at: (" << endpoint.getPosition().x << ", " << endpoint.getPosition().y << ")" << std::endl;
+            window.close();  // Close the game once the endpoint is reached
         }
 
         // Render everything
         window.clear();
         for (const auto& w : walls) window.draw(w);
         window.draw(checkpoint);
+        if (endpointExists) window.draw(endpoint);
         window.draw(player);
         window.display();
     }
