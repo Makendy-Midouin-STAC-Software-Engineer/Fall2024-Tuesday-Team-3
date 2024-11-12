@@ -11,10 +11,24 @@ int main() {
 
     sf::RenderWindow window(sf::VideoMode(COLS * CELL_SIZE, ROWS * CELL_SIZE), "Maze Game with Checkpoints");
 
+    // Load wall texture from the assets folder
+    sf::Texture wallTexture;
+    if (!wallTexture.loadFromFile("assets/brick_texture.jpg")) {  // Load wall texture
+        std::cerr << "Could not load wall texture" << std::endl;
+        return -1;
+    }
+
+    // Load path texture from the assets folder
+    sf::Texture pathTexture;
+    if (!pathTexture.loadFromFile("assets/v2.jpg")) {  // Load path texture
+        std::cerr << "Could not load path texture" << std::endl;
+        return -1;
+    }
+
     // Maze layout (1 = wall, 0 = path, 3 = endpoint)
     int maze[ROWS][COLS] = {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-        {1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1}, // Added endpoint represented by 3
+        {1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1},
         {1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1},
         {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1},
         {1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1},
@@ -25,23 +39,31 @@ int main() {
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     };
 
-    // Create walls based on the maze array
+    // Create walls and paths based on the maze array
     std::vector<sf::RectangleShape> walls;
-    sf::RectangleShape wall(sf::Vector2f(CELL_SIZE - 2, CELL_SIZE - 2));  // Reduced size for thinner appearance
-    wall.setFillColor(sf::Color::Blue);
+    std::vector<sf::RectangleShape> paths;
 
     sf::RectangleShape endpoint(sf::Vector2f(CELL_SIZE - 4, CELL_SIZE - 4));  // Smaller size for endpoint
     endpoint.setFillColor(sf::Color::Red);
-
     bool endpointExists = false;
 
     for (int row = 0; row < ROWS; ++row) {
         for (int col = 0; col < COLS; ++col) {
             if (maze[row][col] == 1) {
+                // Create a wall and apply the wall texture
+                sf::RectangleShape wall(sf::Vector2f(CELL_SIZE, CELL_SIZE));
                 wall.setPosition(col * CELL_SIZE, row * CELL_SIZE);
+                wall.setTexture(&wallTexture);
                 walls.push_back(wall);
+            } else if (maze[row][col] == 0) {
+                // Create a path and apply the path texture
+                sf::RectangleShape path(sf::Vector2f(CELL_SIZE, CELL_SIZE));
+                path.setPosition(col * CELL_SIZE, row * CELL_SIZE);
+                path.setTexture(&pathTexture);
+                paths.push_back(path);
             } else if (maze[row][col] == 3) {
-                endpoint.setPosition(col * CELL_SIZE + 2, row * CELL_SIZE + 2);  // Position endpoint
+                // Position endpoint
+                endpoint.setPosition(col * CELL_SIZE + 2, row * CELL_SIZE + 2);
                 endpointExists = true;
             }
         }
@@ -135,7 +157,8 @@ int main() {
 
         // Render everything
         window.clear();
-        for (const auto& w : walls) window.draw(w);
+        for (const auto& path : paths) window.draw(path);  // Draw paths with texture
+        for (const auto& w : walls) window.draw(w);        // Draw walls with texture
         window.draw(checkpoint);
         if (endpointExists) window.draw(endpoint);
         window.draw(player);
