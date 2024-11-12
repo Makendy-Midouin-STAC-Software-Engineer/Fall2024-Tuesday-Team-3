@@ -50,7 +50,7 @@ int main() {
     // Player setup
     sf::RectangleShape player(sf::Vector2f(15, 15));  // Reduced size to fit smaller cells
     player.setFillColor(sf::Color::Green);
-    player.setPosition(CELL_SIZE + 5, CELL_SIZE + 5);  // Starting position at an open path
+    player.setPosition(CELL_SIZE + 7.5f, CELL_SIZE + 7.5f);  // Updated starting position for centering player within the cell
 
     // Movement speed
     float speed = 100.0f;  // Pixels per second
